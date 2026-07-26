@@ -29,6 +29,15 @@ npx expo start
 
 终端里按 `i` 打开 iOS 模拟器，按 `a` 打开 Android，或扫码用 **Expo Go** 在真机预览。
 
+## 在线部署（Web）
+
+推送到 `main` 后，GitHub Actions 会自动构建并发布 **GitHub Pages**。
+
+1. 仓库 **Settings → Pages → Build and deployment → Source** 选 **GitHub Actions**
+2. Actions 成功后访问：**https://yihaod.github.io/1/**
+
+本地构建：`npm run build:web`（输出 `dist/`）
+
 ## 项目结构
 
 ```
