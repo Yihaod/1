@@ -5,6 +5,7 @@ import { elevation, palette, radius, spacing } from '@/constants/theme';
 import type { CustomerGender } from '@/types/booking';
 
 type Props = {
+  storeName?: string;
   partySize: number;
   date: string;
   time: string;
@@ -16,6 +17,7 @@ type Props = {
 };
 
 export function BookingSummaryCard({
+  storeName,
   partySize,
   date,
   time,
@@ -30,6 +32,7 @@ export function BookingSummaryCard({
       <View style={styles.accentBar} />
       <View style={styles.inner}>
         <Text style={styles.cardLabel}>预约信息</Text>
+        {storeName ? <Row label="门店" value={storeName} accent /> : null}
         <Row label="人数" value={`${partySize} 人`} />
         <Row label="日期" value={formatBookingDate(date)} />
         <Row label="时间" value={time} accent />

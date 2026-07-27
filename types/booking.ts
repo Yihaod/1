@@ -2,6 +2,8 @@ export type CustomerGender = 'male' | 'female' | null;
 
 export type BookingRecord = {
   id: string;
+  storeId?: string;
+  storeName?: string;
   partySize: number;
   date: string;
   time: string;
@@ -19,6 +21,8 @@ export type BookingRecord = {
 };
 
 export type BookingDraft = {
+  storeId: string | null;
+  storeName: string;
   partySize: number;
   date: string | null;
   time: string | null;
@@ -31,6 +35,8 @@ export type BookingDraft = {
 };
 
 export const emptyDraft = (): BookingDraft => ({
+  storeId: null,
+  storeName: '',
   partySize: 2,
   date: null,
   time: null,

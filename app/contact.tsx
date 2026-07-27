@@ -36,7 +36,7 @@ export default function ContactScreen() {
   const [privacyError, setPrivacyError] = useState('');
   const navigatingToSuccess = useRef(false);
 
-  if (!draft.date || !draft.time || !draft.serviceId) {
+  if (!draft.date || !draft.time || !draft.serviceId || !draft.storeId) {
     if (navigatingToSuccess.current || peekPendingSuccessBookingId()) {
       return null;
     }
@@ -45,7 +45,7 @@ export default function ContactScreen() {
         <DecorativeBackground />
         <View style={styles.missingDraft}>
           <Text style={styles.missingTitle}>请先完成时间与项目选择</Text>
-          <PrimaryButton label="返回首页" onPress={() => router.replace('/')} />
+          <PrimaryButton label="返回首页" onPress={() => router.replace('/book')} />
         </View>
       </SafeAreaView>
     );
@@ -73,6 +73,8 @@ export default function ContactScreen() {
     setLoading(true);
     try {
       const payload = {
+        storeId: draft.storeId!,
+        storeName: draft.storeName,
         partySize: draft.partySize,
         date: draft.date!,
         time: draft.time!,
@@ -132,6 +134,7 @@ export default function ContactScreen() {
           </View>
 
           <BookingSummaryCard
+            storeName={draft.storeName}
             partySize={draft.partySize}
             date={draft.date}
             time={draft.time}

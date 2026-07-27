@@ -1,129 +1,102 @@
 import { AppHeader } from '@/components/AppHeader';
-import { DatePickerRow } from '@/components/DatePickerRow';
-import { PageHero } from '@/components/PageHero';
-import { PartySizePicker } from '@/components/PartySizePicker';
-import { PrimaryButton } from '@/components/PrimaryButton';
-import { ScreenShell } from '@/components/ScreenShell';
-import { SectionHeader } from '@/components/SectionHeader';
-import { TimeSlotGrid } from '@/components/TimeSlotGrid';
-import { bookingRules, elevation, palette, radius, spacing } from '@/constants/theme';
+import { StoreOptionCard } from '@/components/StoreOptionCard';
+import { DecorativeBackground } from '@/components/DecorativeBackground';
+import { bookingRules, palette, spacing } from '@/constants/theme';
 import { useBookingDraft } from '@/context/BookingDraftContext';
-import { getDayOptions, getTimeSlotsForDay } from '@/data/mockSchedule';
-import { bookingRepository } from '@/lib/bookingRepository';
-import { useFocusEffect } from '@react-navigation/native';
+import { getStoreById } from '@/data/stores';
+import { useNearbyStores } from '@/hooks/useNearbyStores';
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-export default function BookingHomeScreen() {
+function nearbyHintText(status: ReturnType<typeof useNearbyStores>['status']): string {
+  switch (status) {
+    case 'loading':
+      return '正在获取位置，以便按距离排序门店…';
+    case 'sorted':
+      return '已按与您的大致距离由近到远排列（仅用于选店排序）';
+    case 'denied':
+      return '未开启定位，门店按默认顺序展示；允许定位后可点「重新定位」';
+    case 'no_coords':
+      return '门店尚未配置坐标，暂无法按距离排序';
+    default:
+      return '暂时无法获取位置，门店按默认顺序展示';
+  }
+}
+
+/** 应用入口：先选门店 */
+export default function StoreSelectScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { draft, setDraft } = useBookingDraft();
-  const [latestBookingId, setLatestBookingId] = useState<string | null>(null);
+  const { draft } = useBookingDraft();
+  const { stores: nearbyStores, distanceByStoreId, status: nearbyStatus, refresh: refreshNearby } =
+    useNearbyStores();
 
-  const days = useMemo(() => getDayOptions(), []);
+  const nearestStoreId =
+    nearbyStatus === 'sorted'
+      ? nearbyStores.find((s) => distanceByStoreId[s.id] != null)?.id
+      : undefined;
 
-  useFocusEffect(
-    useCallback(() => {
-      let cancelled = false;
-      bookingRepository.list().then((items) => {
-        if (!cancelled) setLatestBookingId(items[0]?.id ?? null);
-      });
-      return () => {
-        cancelled = true;
-      };
-    }, [])
-  );
-
-  useEffect(() => {
-    if (!draft.date && days[0]) {
-      setDraft((prev) => ({ ...prev, date: days[0].key }));
-    }
-  }, [days, draft.date, setDraft]);
-
-  const slots = useMemo(
-    () => (draft.date ? getTimeSlotsForDay(draft.date) : getTimeSlotsForDay(days[0]?.key ?? '')),
-    [draft.date, days]
-  );
-
-  const canContinue = Boolean(draft.date && draft.time);
-
-  const onSelectDate = (key: string) => {
-    setDraft((prev) => ({ ...prev, date: key, time: null, serviceId: null, serviceName: '' }));
+  const onSelectStore = (storeId: string) => {
+    const store = getStoreById(storeId);
+    if (!store) return;
+    router.replace({
+      pathname: '/book',
+      params: { storeId: store.id },
+    });
   };
 
   return (
-    <ScreenShell bottomInset={insets.bottom + spacing.lg}>
-      <AppHeader />
-      <PageHero />
-
-      {latestBookingId ? (
-        <View style={styles.myBookingWrap}>
-          <PrimaryButton
-            label="查看我的预约"
-            variant="secondary"
-            onPress={() =>
-              router.push(`/success?id=${encodeURIComponent(latestBookingId)}`)
-            }
-          />
+    <SafeAreaView style={styles.safe} edges={['top']}>
+      <DecorativeBackground />
+      <ScrollView
+        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + spacing.xl }]}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <AppHeader />
+        <View style={styles.titleBlock}>
+          <Text style={styles.title}>{bookingRules.storeLabel}</Text>
+          <Text style={styles.sub}>请选择一家门店，再选择预约时间</Text>
         </View>
-      ) : null}
 
-      <View style={[styles.card, elevation.card]}>
-        <SectionHeader icon="calendar-outline" title={bookingRules.cardTitle} showDivider={false} />
-
-        <SectionHeader icon="people-outline" title={bookingRules.partyQuestion} />
-        <PartySizePicker
-          value={draft.partySize}
-          onChange={(partySize) => setDraft((prev) => ({ ...prev, partySize }))}
-        />
-
-        <SectionHeader icon="calendar-outline" title={bookingRules.dateLabel} />
-        <DatePickerRow days={days} selectedKey={draft.date} onSelect={onSelectDate} />
-
-        <SectionHeader icon="time-outline" title={bookingRules.timeLabel} />
-        <Text style={styles.timeHint}>时段较多，可在此区域上下滑动</Text>
-        <TimeSlotGrid
-          slots={slots}
-          selectedTime={draft.time}
-          onSelect={(time) => setDraft((prev) => ({ ...prev, time }))}
-        />
-
-        <View style={styles.cardFooter}>
-          <PrimaryButton
-            label="继续预约"
-            disabled={!canContinue}
-            onPress={() => router.push('/services')}
-          />
+        <View style={styles.nearbyRow}>
+          <Text style={styles.nearbyHint}>{nearbyHintText(nearbyStatus)}</Text>
+          {nearbyStatus !== 'loading' ? (
+            <Pressable onPress={refreshNearby} accessibilityRole="button">
+              <Text style={styles.nearbyRefresh}>重新定位</Text>
+            </Pressable>
+          ) : null}
         </View>
-      </View>
-    </ScreenShell>
+
+        {nearbyStores.map((store) => (
+          <StoreOptionCard
+            key={store.id}
+            store={store}
+            selected={draft.storeId === store.id}
+            onSelect={() => onSelectStore(store.id)}
+            distanceMeters={distanceByStoreId[store.id]}
+            isNearest={store.id === nearestStoreId}
+          />
+        ))}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  myBookingWrap: {
-    marginBottom: spacing.lg,
+  safe: { flex: 1, backgroundColor: palette.background },
+  scroll: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm },
+  titleBlock: { alignItems: 'center', marginBottom: spacing.lg },
+  title: { fontSize: 26, fontWeight: '700', color: palette.inkGreen, letterSpacing: 0.5 },
+  sub: { fontSize: 14, color: palette.textSoft, marginTop: 8, textAlign: 'center' },
+  nearbyRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
   },
-  card: {
-    backgroundColor: palette.card,
-    borderRadius: radius.xl + 2,
-    borderWidth: 1,
-    borderColor: palette.borderLight,
-    padding: spacing.lg,
-    paddingBottom: spacing.md,
-  },
-  cardFooter: {
-    marginTop: spacing.xl,
-    paddingTop: spacing.lg,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: palette.borderLight,
-  },
-  timeHint: {
-    fontSize: 12,
-    color: palette.textSoft,
-    marginBottom: spacing.sm,
-    marginTop: -4,
-  },
+  nearbyHint: { flex: 1, fontSize: 12, lineHeight: 18, color: palette.textSoft },
+  nearbyRefresh: { fontSize: 12, fontWeight: '700', color: palette.jade },
 });

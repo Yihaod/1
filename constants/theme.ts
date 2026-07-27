@@ -43,6 +43,7 @@ export const bookingRules = {
   brandTagline: '顺时调养 · 安心预约',
   headline: '为身体留一点时间',
   headlineSub: '选一席清静时光，赴一场身心调养',
+  storeLabel: '选择门店',
   cardTitle: '预约到店',
   partyQuestion: '几位到店？',
   dateLabel: '选择日期',

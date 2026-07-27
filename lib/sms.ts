@@ -12,7 +12,8 @@ export type SmsSendResult = {
 
 export function buildConfirmationSmsText(booking: BookingRecord): string {
   const dateText = formatBookingDate(booking.date);
-  return `【${bookingRules.brandLabel}】${booking.customerName}您好，预约已确认：${dateText} ${booking.time}，${booking.partySize}人，项目：${booking.serviceName}。预约号${booking.id}。如需改期请联系馆里。`;
+  const storeLine = booking.storeName ? `${booking.storeName}，` : '';
+  return `【${bookingRules.brandLabel}】${booking.customerName}您好，预约已确认：${storeLine}${dateText} ${booking.time}，${booking.partySize}人，项目：${booking.serviceName}。预约号${booking.id}。如需改期请联系馆里。`;
 }
 
 /**

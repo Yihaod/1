@@ -41,6 +41,8 @@ export default function SuccessScreen() {
   const modify = () => {
     if (!booking) return;
     loadFromBooking({
+      storeId: booking.storeId,
+      storeName: booking.storeName,
       partySize: booking.partySize,
       date: booking.date,
       time: booking.time,
@@ -52,7 +54,7 @@ export default function SuccessScreen() {
       note: booking.note ?? '',
     });
     setEditingId(booking.id);
-    router.replace('/');
+    router.replace('/book');
   };
 
   if (loading) {
@@ -72,7 +74,7 @@ export default function SuccessScreen() {
           label="返回首页"
           onPress={() => {
             resetDraft();
-            router.replace('/');
+            router.replace('/book');
           }}
           style={{ margin: spacing.lg }}
         />
@@ -105,6 +107,7 @@ export default function SuccessScreen() {
         </View>
 
         <BookingSummaryCard
+          storeName={booking.storeName}
           partySize={booking.partySize}
           date={booking.date}
           time={booking.time}
@@ -140,7 +143,7 @@ export default function SuccessScreen() {
             label="返回首页"
             onPress={() => {
               resetDraft();
-              router.replace('/');
+              router.replace('/book');
             }}
           />
         </View>

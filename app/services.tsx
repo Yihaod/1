@@ -19,13 +19,15 @@ export default function ServiceSelectScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      if (!draft.date || !draft.time) {
+      if (!draft.storeId) {
         router.replace('/');
+      } else if (!draft.date || !draft.time) {
+        router.replace('/book');
       }
-    }, [draft.date, draft.time, router])
+    }, [draft.storeId, draft.date, draft.time, router])
   );
 
-  if (!draft.date || !draft.time) {
+  if (!draft.storeId || !draft.date || !draft.time) {
     return null;
   }
 
@@ -40,6 +42,7 @@ export default function ServiceSelectScreen() {
       </View>
 
       <BookingSummaryCard
+        storeName={draft.storeName}
         partySize={draft.partySize}
         date={draft.date}
         time={draft.time}
