@@ -1,3 +1,5 @@
+export type CustomerGender = 'male' | 'female' | null;
+
 export type BookingRecord = {
   id: string;
   partySize: number;
@@ -6,6 +8,8 @@ export type BookingRecord = {
   serviceId: string;
   serviceName: string;
   customerName: string;
+  /** 选填，便于称呼与服务安排 */
+  gender?: CustomerGender;
   phone: string;
   note?: string;
   smsSent?: boolean;
@@ -21,6 +25,7 @@ export type BookingDraft = {
   serviceId: string | null;
   serviceName: string;
   customerName: string;
+  gender: CustomerGender;
   phone: string;
   note: string;
 };
@@ -32,6 +37,7 @@ export const emptyDraft = (): BookingDraft => ({
   serviceId: null,
   serviceName: '',
   customerName: '',
+  gender: null,
   phone: '',
   note: '',
 });

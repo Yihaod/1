@@ -2,6 +2,8 @@ import { AppHeader } from '@/components/AppHeader';
 import { BookingSummaryCard } from '@/components/BookingSummaryCard';
 import { DecorativeBackground } from '@/components/DecorativeBackground';
 import { PrimaryButton } from '@/components/PrimaryButton';
+import { GenderPicker } from '@/components/GenderPicker';
+import { PrivacyConsentBlock } from '@/components/PrivacyConsentBlock';
 import { palette, radius, spacing } from '@/constants/theme';
 import { useBookingDraft } from '@/context/BookingDraftContext';
 import { bookingRepository } from '@/lib/bookingRepository';
@@ -30,6 +32,8 @@ export default function ContactScreen() {
   const [loading, setLoading] = useState(false);
   const [nameError, setNameError] = useState('');
   const [phoneError, setPhoneError] = useState('');
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
+  const [privacyError, setPrivacyError] = useState('');
   const navigatingToSuccess = useRef(false);
 
   if (!draft.date || !draft.time || !draft.serviceId) {
@@ -57,6 +61,10 @@ export default function ContactScreen() {
       setPhoneError('请输入 11 位中国大陆手机号');
       ok = false;
     } else setPhoneError('');
+    if (!privacyAccepted) {
+      setPrivacyError('请先阅读并同意《隐私政策》');
+      ok = false;
+    } else setPrivacyError('');
     return ok;
   };
 
@@ -71,6 +79,7 @@ export default function ContactScreen() {
         serviceId: draft.serviceId!,
         serviceName: draft.serviceName,
         customerName: draft.customerName.trim(),
+        gender: draft.gender ?? undefined,
         phone: draft.phone.trim(),
         note: draft.note.trim() || undefined,
       };
@@ -112,7 +121,7 @@ export default function ContactScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView
-          contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 120 }]}
+          contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 220 }]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
@@ -142,6 +151,12 @@ export default function ContactScreen() {
             />
             {nameError ? <Text style={styles.error}>{nameError}</Text> : null}
 
+            <Text style={styles.label}>性别（选填）</Text>
+            <GenderPicker
+              value={draft.gender}
+              onChange={(gender) => setDraft((p) => ({ ...p, gender }))}
+            />
+
             <Text style={styles.label}>手机号</Text>
             <TextInput
               style={[styles.input, phoneError ? styles.inputError : null]}
@@ -160,7 +175,7 @@ export default function ContactScreen() {
               style={[styles.input, styles.textArea]}
               value={draft.note}
               onChangeText={(note) => setDraft((p) => ({ ...p, note }))}
-              placeholder="如体质情况、到店偏好等"
+              placeholder="如到店偏好（请勿填写详细病历）"
               placeholderTextColor={palette.textSoft}
               multiline
               accessibilityLabel="备注"
@@ -173,9 +188,18 @@ export default function ContactScreen() {
         </ScrollView>
 
         <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
+          <PrivacyConsentBlock
+            checked={privacyAccepted}
+            onToggle={() => {
+              setPrivacyAccepted((v) => !v);
+              setPrivacyError('');
+            }}
+            error={privacyError}
+          />
           <PrimaryButton
             label={loading ? '正在提交并发送短信…' : '确认预约'}
             loading={loading}
+            disabled={!privacyAccepted}
             onPress={submit}
           />
         </View>

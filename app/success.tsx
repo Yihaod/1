@@ -47,6 +47,7 @@ export default function SuccessScreen() {
       serviceId: booking.serviceId,
       serviceName: booking.serviceName,
       customerName: booking.customerName,
+      gender: booking.gender ?? null,
       phone: booking.phone,
       note: booking.note ?? '',
     });
@@ -109,6 +110,7 @@ export default function SuccessScreen() {
           time={booking.time}
           serviceName={booking.serviceName}
           customerName={booking.customerName}
+          gender={booking.gender}
         />
 
         <View style={[styles.smsCard, smsOk ? styles.smsOk : styles.smsFail]}>
