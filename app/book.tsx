@@ -11,9 +11,10 @@ import { bookingRules, elevation, palette, radius, spacing } from '@/constants/t
 import { useBookingDraft } from '@/context/BookingDraftContext';
 import { getDayOptions, getTimeSlotsForDay } from '@/data/mockSchedule';
 import { getStoreById } from '@/data/stores';
+import { adminSettingsRepository } from '@/lib/adminSettingsRepository';
 import { useFocusEffect } from '@react-navigation/native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useLayoutEffect, useMemo } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -26,6 +27,33 @@ export default function BookScheduleScreen() {
   const paramStoreId = Array.isArray(rawStoreId) ? rawStoreId[0] : rawStoreId;
 
   const days = useMemo(() => getDayOptions(), []);
+  const [blockedTimes, setBlockedTimes] = useState<Set<string>>(() => new Set());
+
+  const reloadBlocks = useCallback(() => {
+    const sid = draft.storeId || paramStoreId;
+    const dateKey = draft.date ?? days[0]?.key;
+    if (!sid || !dateKey) {
+      setBlockedTimes(new Set());
+      return;
+    }
+    adminSettingsRepository.listBlockedForDay(sid, dateKey).then(setBlockedTimes);
+  }, [draft.storeId, draft.date, paramStoreId, days]);
+
+  useFocusEffect(
+    useCallback(() => {
+      reloadBlocks();
+    }, [reloadBlocks])
+  );
+
+  useEffect(() => {
+    reloadBlocks();
+  }, [reloadBlocks]);
+
+  useEffect(() => {
+    if (draft.time && blockedTimes.has(draft.time)) {
+      setDraft((prev) => ({ ...prev, time: null }));
+    }
+  }, [blockedTimes, draft.time, setDraft]);
 
   useLayoutEffect(() => {
     if (!paramStoreId) return;
@@ -109,6 +137,7 @@ export default function BookScheduleScreen() {
         <TimeSlotGrid
           slots={slots}
           selectedTime={draft.time}
+          disabledLabels={blockedTimes}
           onSelect={(time) => setDraft((prev) => ({ ...prev, time }))}
         />
 

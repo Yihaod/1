@@ -1,8 +1,10 @@
 # 中医馆预约 App（MVP）
 
-30 秒内完成预约：**人数 → 日期 → 时间 → 联系方式 → 成功**。
+30 秒内完成预约：**选店 → 人数 → 日期 → 时间 → 项目 → 联系方式 → 成功**。
 
-## 启动
+**商家管理**为独立项目，见 [`merchant-app/README.md`](merchant-app/README.md)。
+
+## 启动（顾客端）
 
 ```bash
 cd ~/Projects/service-booking-app/service-booking-app
@@ -11,8 +13,15 @@ npx expo start
 ```
 
 - 按 `i` / `a` 打开模拟器，或 **Expo Go** 扫码  
-- Web 预览：`npx expo start --web`  
+- Web 预览：`npx expo start --web`（默认 **8081**）  
 - 类型检查：`npm run typecheck`
+
+## 线上演示
+
+| 端 | 地址 |
+|----|------|
+| 顾客端 | https://yihaod.github.io/1/ |
+| 商家端 | https://yihaod.github.io/1/merchant/ |
 
 ## 页面
 

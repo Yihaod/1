@@ -27,16 +27,34 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: Install dependencies
+      - name: Install consumer dependencies
         run: npm ci
 
-      - name: Build static web app
+      - name: Build consumer web app
         run: EXPO_PUBLIC_BASE_PATH=/1 npm run build:web
+
+      - name: Stage consumer artifact
+        run: |
+          mkdir -p pages-dist
+          cp -R dist/. pages-dist/
+
+      - name: Install merchant dependencies
+        working-directory: merchant-app
+        run: npm ci
+
+      - name: Build merchant web app
+        working-directory: merchant-app
+        run: EXPO_PUBLIC_BASE_PATH=/1/merchant npm run build:web
+
+      - name: Merge merchant into Pages artifact
+        run: |
+          mkdir -p pages-dist/merchant
+          cp -R merchant-app/dist/. pages-dist/merchant/
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: pages-dist
 
   deploy:
     needs: build

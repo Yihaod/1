@@ -9,9 +9,11 @@ type Props = {
   slots: TimeSlot[];
   selectedTime: string | null;
   onSelect: (time: string) => void;
+  /** 商家 Block 的时段，顾客不可选 */
+  disabledLabels?: ReadonlySet<string>;
 };
 
-export function TimeSlotGrid({ slots, selectedTime, onSelect }: Props) {
+export function TimeSlotGrid({ slots, selectedTime, onSelect, disabledLabels }: Props) {
   return (
     <View style={styles.panel}>
       <ScrollView
@@ -23,21 +25,30 @@ export function TimeSlotGrid({ slots, selectedTime, onSelect }: Props) {
       >
         {slots.map((slot) => {
           const selected = slot.label === selectedTime;
+          const disabled = disabledLabels?.has(slot.label) ?? false;
           return (
             <Pressable
               key={slot.id}
+              disabled={disabled}
               onPress={() => onSelect(slot.label)}
               style={({ pressed }) => [
                 styles.slot,
                 selected && styles.slotSelected,
-                pressed && !selected && styles.slotPressed,
+                disabled && styles.slotDisabled,
+                pressed && !selected && !disabled && styles.slotPressed,
               ]}
               accessibilityRole="radio"
-              accessibilityState={{ selected }}
-              accessibilityLabel={slot.label}
+              accessibilityState={{ selected, disabled }}
+              accessibilityLabel={disabled ? `${slot.label} 已满或不可约` : slot.label}
             >
-              <Text style={[styles.slotText, selected && styles.slotTextSelected]}>
-                {slot.label}
+              <Text
+                style={[
+                  styles.slotText,
+                  selected && styles.slotTextSelected,
+                  disabled && styles.slotTextDisabled,
+                ]}
+              >
+                {disabled ? '不可约' : slot.label}
               </Text>
             </Pressable>
           );
@@ -81,6 +92,12 @@ const styles = StyleSheet.create({
     backgroundColor: palette.inkGreen,
   },
   slotPressed: { backgroundColor: palette.jadeMist },
+  slotDisabled: {
+    borderColor: palette.borderLight,
+    backgroundColor: '#F5F3F0',
+    opacity: 0.85,
+  },
   slotText: { fontSize: 15, fontWeight: '600', color: palette.inkGreenMuted, letterSpacing: 0.5 },
   slotTextSelected: { color: '#fff', fontWeight: '700' },
+  slotTextDisabled: { fontSize: 13, color: palette.textSoft, fontWeight: '600' },
 });
