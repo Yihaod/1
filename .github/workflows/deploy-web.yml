@@ -31,7 +31,7 @@ jobs:
         run: npm ci
 
       - name: Build static web app
-        run: npm run build:web
+        run: EXPO_PUBLIC_BASE_PATH=/1 npm run build:web
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

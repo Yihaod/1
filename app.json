@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "易预约",
+    "name": "中医馆预约",
     "slug": "service-booking-app",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -11,7 +11,7 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#0F766E"
+      "backgroundColor": "#173D35"
     },
     "ios": {
       "supportsTablet": true,
@@ -20,7 +20,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#0F766E"
+        "backgroundColor": "#173D35"
       },
       "package": "com.example.servicebooking"
     },
@@ -28,9 +28,6 @@
       "bundler": "metro",
       "output": "static",
       "favicon": "./assets/favicon.png"
-    },
-    "experiments": {
-      "baseUrl": "/1"
     },
     "plugins": [
       "expo-router",
