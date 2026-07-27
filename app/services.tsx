@@ -20,7 +20,7 @@ export default function ServiceSelectScreen() {
   useFocusEffect(
     useCallback(() => {
       if (!draft.storeId) {
-        router.replace('/');
+        router.replace('/stores');
       } else if (!draft.date || !draft.time) {
         router.replace('/book');
       }

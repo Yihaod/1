@@ -1,6 +1,7 @@
 import { bookingRules } from '@/constants/theme';
 import { smsConfig } from '@/constants/config';
 import { formatBookingDate } from '@/data/mockSchedule';
+import { formatCustomerDisplayName } from '@/lib/gender';
 import type { BookingRecord } from '@/types/booking';
 
 export type SmsSendResult = {
@@ -13,7 +14,8 @@ export type SmsSendResult = {
 export function buildConfirmationSmsText(booking: BookingRecord): string {
   const dateText = formatBookingDate(booking.date);
   const storeLine = booking.storeName ? `${booking.storeName}，` : '';
-  return `【${bookingRules.brandLabel}】${booking.customerName}您好，预约已确认：${storeLine}${dateText} ${booking.time}，${booking.partySize}人，项目：${booking.serviceName}。预约号${booking.id}。如需改期请联系馆里。`;
+  const displayName = formatCustomerDisplayName(booking.customerName, booking.gender);
+  return `【${bookingRules.brandLabel}】${displayName}您好，预约已确认：${storeLine}${dateText} ${booking.time}，${booking.partySize}人，项目：${booking.serviceName}。预约号${booking.id}。如需改期请联系馆里。`;
 }
 
 /**

@@ -6,9 +6,11 @@ import { GenderPicker } from '@/components/GenderPicker';
 import { PrivacyConsentBlock } from '@/components/PrivacyConsentBlock';
 import { palette, radius, spacing } from '@/constants/theme';
 import { useBookingDraft } from '@/context/BookingDraftContext';
+import { BOOKING_STATUS_CONFIRMED } from '@/lib/bookingStatus';
 import { bookingRepository } from '@/lib/bookingRepository';
 import { setPendingSuccessBookingId, peekPendingSuccessBookingId } from '@/lib/lastSuccess';
 import { sendBookingConfirmationSms } from '@/lib/sms';
+import { stripCustomerHonorific } from '@/lib/gender';
 import { isNonEmptyName, isValidCnMobile } from '@/lib/validation';
 import { useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
@@ -45,7 +47,7 @@ export default function ContactScreen() {
         <DecorativeBackground />
         <View style={styles.missingDraft}>
           <Text style={styles.missingTitle}>请先完成时间与项目选择</Text>
-          <PrimaryButton label="返回首页" onPress={() => router.replace('/book')} />
+          <PrimaryButton label="返回首页" onPress={() => router.replace('/')} />
         </View>
       </SafeAreaView>
     );
@@ -53,8 +55,8 @@ export default function ContactScreen() {
 
   const validate = () => {
     let ok = true;
-    if (!isNonEmptyName(draft.customerName)) {
-      setNameError('请输入至少 2 个字的姓名');
+    if (!isNonEmptyName(stripCustomerHonorific(draft.customerName))) {
+      setNameError('请输入姓名');
       ok = false;
     } else setNameError('');
     if (!isValidCnMobile(draft.phone)) {
@@ -80,15 +82,20 @@ export default function ContactScreen() {
         time: draft.time!,
         serviceId: draft.serviceId!,
         serviceName: draft.serviceName,
-        customerName: draft.customerName.trim(),
+        customerName: stripCustomerHonorific(draft.customerName),
         gender: draft.gender ?? undefined,
         phone: draft.phone.trim(),
         note: draft.note.trim() || undefined,
       };
 
       const record = editingId
-        ? await bookingRepository.update(editingId, { ...payload, smsSent: false })
-        : await bookingRepository.create({ ...payload, smsSent: false });
+        ? await bookingRepository.update(editingId, {
+            ...payload,
+            status: BOOKING_STATUS_CONFIRMED,
+            smsSent: false,
+            cancelledAt: undefined,
+          })
+        : await bookingRepository.create({ ...payload, status: BOOKING_STATUS_CONFIRMED, smsSent: false });
 
       if (!record) {
         Alert.alert('保存失败', '请稍后重试');
@@ -133,14 +140,6 @@ export default function ContactScreen() {
             <Text style={styles.sub}>最后一步，确认后将为您保留时段</Text>
           </View>
 
-          <BookingSummaryCard
-            storeName={draft.storeName}
-            partySize={draft.partySize}
-            date={draft.date}
-            time={draft.time}
-            serviceName={draft.serviceName}
-          />
-
           <View style={styles.formCard}>
             <Text style={styles.formTitle}>如何联系您</Text>
             <Text style={styles.label}>姓名</Text>
@@ -184,6 +183,21 @@ export default function ContactScreen() {
               accessibilityLabel="备注"
             />
           </View>
+
+          <Text style={styles.confirmSectionTitle}>确认信息</Text>
+          <BookingSummaryCard
+            storeName={draft.storeName}
+            partySize={draft.partySize}
+            date={draft.date!}
+            time={draft.time!}
+            serviceName={draft.serviceName}
+            customerName={
+              stripCustomerHonorific(draft.customerName).length >= 1
+                ? draft.customerName
+                : undefined
+            }
+            gender={draft.gender}
+          />
 
           <Pressable onPress={() => router.back()} style={styles.backLink} accessibilityRole="button">
             <Text style={styles.backLinkText}>返回修改项目</Text>
@@ -238,6 +252,15 @@ const styles = StyleSheet.create({
     color: palette.textSoft,
     letterSpacing: 2,
     marginBottom: spacing.sm,
+  },
+  confirmSectionTitle: {
+    marginTop: spacing.lg,
+    marginBottom: spacing.sm,
+    fontSize: 12,
+    fontWeight: '700',
+    color: palette.textSoft,
+    letterSpacing: 2,
+    textAlign: 'center',
   },
   label: { fontSize: 14, fontWeight: '600', color: palette.textMuted, marginTop: spacing.sm },
   input: {

@@ -3,5 +3,5 @@ export function isValidCnMobile(phone: string): boolean {
 }
 
 export function isNonEmptyName(name: string): boolean {
-  return name.trim().length >= 2;
+  return name.trim().length >= 1;
 }

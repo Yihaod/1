@@ -11,10 +11,9 @@ import { bookingRules, elevation, palette, radius, spacing } from '@/constants/t
 import { useBookingDraft } from '@/context/BookingDraftContext';
 import { getDayOptions, getTimeSlotsForDay } from '@/data/mockSchedule';
 import { getStoreById } from '@/data/stores';
-import { bookingRepository } from '@/lib/bookingRepository';
 import { useFocusEffect } from '@react-navigation/native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -22,7 +21,6 @@ export default function BookScheduleScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { draft, setDraft } = useBookingDraft();
-  const [latestBookingId, setLatestBookingId] = useState<string | null>(null);
   const params = useLocalSearchParams<{ storeId?: string | string[] }>();
   const rawStoreId = params.storeId;
   const paramStoreId = Array.isArray(rawStoreId) ? rawStoreId[0] : rawStoreId;
@@ -50,16 +48,9 @@ export default function BookScheduleScreen() {
     useCallback(() => {
       const hasStore = Boolean(draft.storeId || paramStoreId);
       if (!hasStore) {
-        router.replace('/');
+        router.replace('/stores');
         return;
       }
-      let cancelled = false;
-      bookingRepository.list().then((items) => {
-        if (!cancelled) setLatestBookingId(items[0]?.id ?? null);
-      });
-      return () => {
-        cancelled = true;
-      };
     }, [draft.storeId, paramStoreId, router])
   );
 
@@ -99,18 +90,6 @@ export default function BookScheduleScreen() {
       <AppHeader />
       <PageHero compact />
 
-      {latestBookingId ? (
-        <View style={styles.myBookingWrap}>
-          <PrimaryButton
-            label="查看我的预约"
-            variant="secondary"
-            onPress={() =>
-              router.push(`/success?id=${encodeURIComponent(latestBookingId)}`)
-            }
-          />
-        </View>
-      ) : null}
-
       <SelectedStoreBar storeName={activeStore.name} />
 
       <View style={[styles.card, elevation.card]}>
@@ -147,9 +126,6 @@ export default function BookScheduleScreen() {
 
 const styles = StyleSheet.create({
   loading: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: palette.background },
-  myBookingWrap: {
-    marginBottom: spacing.md,
-  },
   card: {
     backgroundColor: palette.card,
     borderRadius: radius.xl + 2,

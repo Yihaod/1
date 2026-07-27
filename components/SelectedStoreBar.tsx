@@ -14,7 +14,7 @@ export function SelectedStoreBar({ storeName, distanceMeters }: Props) {
 
   return (
     <Pressable
-      onPress={() => router.push('/')}
+      onPress={() => router.push('/stores')}
       style={({ pressed }) => [styles.bar, pressed && styles.pressed]}
       accessibilityRole="button"
       accessibilityLabel={`当前门店 ${storeName}，点击更换`}

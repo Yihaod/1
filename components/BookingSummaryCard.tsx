@@ -1,4 +1,4 @@
-import { formatGender } from '@/lib/gender';
+import { formatCustomerDisplayName } from '@/lib/gender';
 import { StyleSheet, Text, View } from 'react-native';
 import { formatBookingDate } from '@/data/mockSchedule';
 import { elevation, palette, radius, spacing } from '@/constants/theme';
@@ -37,8 +37,12 @@ export function BookingSummaryCard({
         <Row label="日期" value={formatBookingDate(date)} />
         <Row label="时间" value={time} accent />
         {serviceName ? <Row label="项目" value={serviceName} /> : null}
-        {customerName ? <Row label="联系人" value={customerName} /> : null}
-        {formatGender(gender) ? <Row label="性别" value={formatGender(gender)!} /> : null}
+        {customerName ? (
+          <Row
+            label="联系人"
+            value={formatCustomerDisplayName(customerName, gender)}
+          />
+        ) : null}
         {bookingId ? <Row label="预约编号" value={bookingId} mono /> : null}
       </View>
     </View>

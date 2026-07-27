@@ -1,5 +1,7 @@
 export type CustomerGender = 'male' | 'female' | null;
 
+export type BookingStatus = 'confirmed' | 'cancelled';
+
 export type BookingRecord = {
   id: string;
   storeId?: string;
@@ -14,6 +16,8 @@ export type BookingRecord = {
   gender?: CustomerGender;
   phone: string;
   note?: string;
+  status?: BookingStatus;
+  cancelledAt?: string;
   smsSent?: boolean;
   /** 最近一次确认短信说明（演示或发送结果摘要） */
   smsNotice?: string;

@@ -14,9 +14,9 @@ export default function RootLayout() {
           animation: 'slide_from_right',
         }}
       >
-        <Stack.Screen name="index" />
-        <Stack.Screen name="book" />
+        <Stack.Screen name="index" options={{ animation: 'fade' }} />
         <Stack.Screen name="stores" />
+        <Stack.Screen name="book" />
         <Stack.Screen name="services" />
         <Stack.Screen name="contact" />
         <Stack.Screen name="privacy" options={{ animation: 'slide_from_right' }} />

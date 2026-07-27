@@ -6,12 +6,13 @@ import { takePendingSuccessBookingId } from '@/lib/lastSuccess';
 import { maskPhone } from '@/lib/phone';
 import { elevation, palette, radius, spacing } from '@/constants/theme';
 import { useBookingDraft } from '@/context/BookingDraftContext';
+import { isBookingCancelled } from '@/lib/bookingStatus';
 import { bookingRepository } from '@/lib/bookingRepository';
 import type { BookingRecord } from '@/types/booking';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function SuccessScreen() {
@@ -24,6 +25,7 @@ export default function SuccessScreen() {
   const { loadFromBooking, setEditingId, resetDraft } = useBookingDraft();
   const [booking, setBooking] = useState<BookingRecord | null>(null);
   const [loading, setLoading] = useState(true);
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     const bookingId = paramId || takePendingSuccessBookingId();
@@ -39,7 +41,7 @@ export default function SuccessScreen() {
   }, [paramId]);
 
   const modify = () => {
-    if (!booking) return;
+    if (!booking || isBookingCancelled(booking)) return;
     loadFromBooking({
       storeId: booking.storeId,
       storeName: booking.storeName,
@@ -55,6 +57,34 @@ export default function SuccessScreen() {
     });
     setEditingId(booking.id);
     router.replace('/book');
+  };
+
+  const confirmCancel = () => {
+    if (!booking || isBookingCancelled(booking) || cancelling) return;
+    Alert.alert('取消预约', '确定要取消本次预约吗？取消后该时段将不再为您保留。', [
+      { text: '再想想', style: 'cancel' },
+      {
+        text: '确认取消',
+        style: 'destructive',
+        onPress: async () => {
+          setCancelling(true);
+          try {
+            const updated = await bookingRepository.update(booking.id, {
+              status: 'cancelled',
+              cancelledAt: new Date().toISOString(),
+            });
+            if (updated) {
+              setBooking(updated);
+              if (booking.id) setEditingId(null);
+            } else {
+              Alert.alert('取消失败', '请稍后重试');
+            }
+          } finally {
+            setCancelling(false);
+          }
+        },
+      },
+    ]);
   };
 
   if (loading) {
@@ -74,7 +104,7 @@ export default function SuccessScreen() {
           label="返回首页"
           onPress={() => {
             resetDraft();
-            router.replace('/book');
+            router.replace('/');
           }}
           style={{ margin: spacing.lg }}
         />
@@ -82,6 +112,7 @@ export default function SuccessScreen() {
     );
   }
 
+  const cancelled = isBookingCancelled(booking);
   const smsOk = booking.smsSent === true;
   const smsPreview = buildConfirmationSmsText(booking);
 
@@ -93,13 +124,21 @@ export default function SuccessScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.badge}>
-          <View style={styles.iconCircle}>
-            <Ionicons name="checkmark" size={44} color={palette.inkGreen} />
+          <View style={[styles.iconCircle, cancelled && styles.iconCircleCancelled]}>
+            <Ionicons
+              name={cancelled ? 'close' : 'checkmark'}
+              size={44}
+              color={cancelled ? palette.cinnabar : palette.inkGreen}
+            />
           </View>
         </View>
 
-        <Text style={styles.title}>预约成功</Text>
-        <Text style={styles.sub}>您的到店时段已预留，期待与您相见</Text>
+        <Text style={styles.title}>{cancelled ? '预约已取消' : '预约成功'}</Text>
+        <Text style={styles.sub}>
+          {cancelled
+            ? '该预约已作废，如需到店请重新预约'
+            : '您的到店时段已预留，期待与您相见'}
+        </Text>
 
         <View style={[styles.idChip, elevation.card]}>
           <Text style={styles.idLabel}>预约编号</Text>
@@ -138,12 +177,26 @@ export default function SuccessScreen() {
         </View>
 
         <View style={styles.actions}>
-          <PrimaryButton label="修改预约" variant="secondary" onPress={modify} />
+          {!cancelled ? (
+            <>
+              <PrimaryButton label="修改预约" variant="secondary" onPress={modify} />
+              <Pressable
+                onPress={confirmCancel}
+                disabled={cancelling}
+                style={styles.cancelLink}
+                accessibilityRole="button"
+              >
+                <Text style={styles.cancelLinkText}>
+                  {cancelling ? '正在取消…' : '取消预约'}
+                </Text>
+              </Pressable>
+            </>
+          ) : null}
           <PrimaryButton
-            label="返回首页"
+            label={cancelled ? '重新预约' : '返回首页'}
             onPress={() => {
               resetDraft();
-              router.replace('/book');
+              router.replace(cancelled ? '/stores' : '/');
             }}
           />
         </View>
@@ -170,6 +223,10 @@ const styles = StyleSheet.create({
     borderColor: palette.jadeLight,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  iconCircleCancelled: {
+    backgroundColor: '#FFF5F3',
+    borderColor: '#E8C4BC',
   },
   title: {
     fontSize: 32,
@@ -221,5 +278,7 @@ const styles = StyleSheet.create({
   smsPreviewLabel: { fontSize: 11, color: palette.textSoft, letterSpacing: 1, marginBottom: 6 },
   smsPreviewText: { fontSize: 13, lineHeight: 21, color: palette.textMuted },
   actions: { gap: spacing.sm, marginTop: spacing.xs },
+  cancelLink: { alignItems: 'center', paddingVertical: spacing.md },
+  cancelLinkText: { fontSize: 16, fontWeight: '700', color: palette.cinnabar },
   error: { textAlign: 'center', marginTop: 80, color: palette.textMuted },
 });
