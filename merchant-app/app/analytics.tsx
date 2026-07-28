@@ -8,6 +8,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useBookingsRevision } from '@/hooks/useBookingsRevision';
 
 function summarize(records: BookingRecord[]) {
   const active = records.filter(isBookingActive);
@@ -35,11 +36,12 @@ function summarize(records: BookingRecord[]) {
 export default function AdminAnalyticsScreen() {
   const insets = useSafeAreaInsets();
   const [stats, setStats] = useState(() => summarize([]));
+  const bookingsRevision = useBookingsRevision();
 
   useFocusEffect(
     useCallback(() => {
       bookingRepository.list().then((items) => setStats(summarize(items)));
-    }, [])
+    }, [bookingsRevision])
   );
 
   return (

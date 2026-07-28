@@ -1,4 +1,5 @@
 import { BookingSummaryCard } from '@/components/BookingSummaryCard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { DecorativeBackground } from '@/components/DecorativeBackground';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { buildConfirmationSmsText } from '@/lib/sms';
@@ -8,11 +9,12 @@ import { elevation, palette, radius, spacing } from '@/constants/theme';
 import { useBookingDraft } from '@/context/BookingDraftContext';
 import { isBookingCancelled } from '@/lib/bookingStatus';
 import { bookingRepository } from '@/lib/bookingRepository';
+import { subscribeBookingsChanged } from '@/lib/bookingChangeBus';
 import type { BookingRecord } from '@/types/booking';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function SuccessScreen() {
@@ -26,19 +28,49 @@ export default function SuccessScreen() {
   const [booking, setBooking] = useState<BookingRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+
+  const bookingId = paramId || booking?.id || null;
 
   useEffect(() => {
-    const bookingId = paramId || takePendingSuccessBookingId();
-    if (!bookingId) {
+    const id = paramId || takePendingSuccessBookingId();
+    if (!id) {
       setLoading(false);
       return;
     }
 
-    bookingRepository.getById(bookingId).then((record) => {
+    bookingRepository.getById(id).then((record) => {
       setBooking(record);
       setLoading(false);
     });
   }, [paramId]);
+
+  useEffect(() => {
+    if (!bookingId) return;
+    return subscribeBookingsChanged(() => {
+      bookingRepository.getById(bookingId).then((record) => {
+        if (record) setBooking(record);
+      });
+    });
+  }, [bookingId]);
+
+  const runCancel = async () => {
+    if (!booking || isBookingCancelled(booking) || cancelling) return;
+    setCancelling(true);
+    try {
+      const updated = await bookingRepository.update(booking.id, {
+        status: 'cancelled',
+        cancelledAt: new Date().toISOString(),
+      });
+      if (updated) {
+        setBooking(updated);
+        setEditingId(null);
+        setCancelDialogOpen(false);
+      }
+    } finally {
+      setCancelling(false);
+    }
+  };
 
   const modify = () => {
     if (!booking || isBookingCancelled(booking)) return;
@@ -57,34 +89,6 @@ export default function SuccessScreen() {
     });
     setEditingId(booking.id);
     router.replace('/book');
-  };
-
-  const confirmCancel = () => {
-    if (!booking || isBookingCancelled(booking) || cancelling) return;
-    Alert.alert('取消预约', '确定要取消本次预约吗？取消后该时段将不再为您保留。', [
-      { text: '再想想', style: 'cancel' },
-      {
-        text: '确认取消',
-        style: 'destructive',
-        onPress: async () => {
-          setCancelling(true);
-          try {
-            const updated = await bookingRepository.update(booking.id, {
-              status: 'cancelled',
-              cancelledAt: new Date().toISOString(),
-            });
-            if (updated) {
-              setBooking(updated);
-              if (booking.id) setEditingId(null);
-            } else {
-              Alert.alert('取消失败', '请稍后重试');
-            }
-          } finally {
-            setCancelling(false);
-          }
-        },
-      },
-    ]);
   };
 
   if (loading) {
@@ -122,6 +126,7 @@ export default function SuccessScreen() {
       <ScrollView
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.lg }]}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         <View style={styles.badge}>
           <View style={[styles.iconCircle, cancelled && styles.iconCircleCancelled]}>
@@ -181,7 +186,7 @@ export default function SuccessScreen() {
             <>
               <PrimaryButton label="修改预约" variant="secondary" onPress={modify} />
               <Pressable
-                onPress={confirmCancel}
+                onPress={() => setCancelDialogOpen(true)}
                 disabled={cancelling}
                 style={styles.cancelLink}
                 accessibilityRole="button"
@@ -201,6 +206,22 @@ export default function SuccessScreen() {
           />
         </View>
       </ScrollView>
+
+      <ConfirmDialog
+        visible={cancelDialogOpen}
+        title="取消预约"
+        message="确定要取消本次预约吗？取消后该时段将不再为您保留。"
+        confirmLabel="确认取消"
+        cancelLabel="再想想"
+        destructive
+        loading={cancelling}
+        onCancel={() => {
+          if (!cancelling) setCancelDialogOpen(false);
+        }}
+        onConfirm={() => {
+          void runCancel();
+        }}
+      />
     </SafeAreaView>
   );
 }

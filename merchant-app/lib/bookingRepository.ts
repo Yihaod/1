@@ -1,7 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { BookingRecord } from '@/types/booking';
+import { BOOKINGS_STORAGE_KEY, notifyBookingsChanged } from '@/lib/bookingChangeBus';
 
-const STORAGE_KEY = '@tcm_booking/records_v3';
+const STORAGE_KEY = BOOKINGS_STORAGE_KEY;
 
 /** 本地存储实现；后续可替换为 Supabase 等同名接口 */
 export interface BookingRepository {
@@ -37,6 +38,7 @@ class LocalBookingRepository implements BookingRepository {
     const items = await this.list();
     items.unshift(record);
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    notifyBookingsChanged();
     return record;
   }
 
@@ -49,6 +51,7 @@ class LocalBookingRepository implements BookingRepository {
     if (index === -1) return null;
     items[index] = { ...items[index], ...patch };
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    notifyBookingsChanged();
     return items[index];
   }
 }

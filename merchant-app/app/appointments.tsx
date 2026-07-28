@@ -12,6 +12,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useBookingsRevision } from '@/hooks/useBookingsRevision';
 
 export default function AdminAppointmentsScreen() {
   const insets = useSafeAreaInsets();
@@ -19,6 +20,7 @@ export default function AdminAppointmentsScreen() {
   const days = useMemo(() => getDayOptions(14), []);
   const [date, setDate] = useState(days[0]?.key ?? '');
   const [items, setItems] = useState<BookingRecord[]>([]);
+  const bookingsRevision = useBookingsRevision();
 
   const reload = useCallback(() => {
     bookingRepository.list().then((all) => {
@@ -34,7 +36,7 @@ export default function AdminAppointmentsScreen() {
   useFocusEffect(
     useCallback(() => {
       reload();
-    }, [reload])
+    }, [reload, bookingsRevision])
   );
 
   return (
@@ -46,7 +48,7 @@ export default function AdminAppointmentsScreen() {
       >
         <AdminStorePicker />
         <Text style={styles.hint}>
-          演示环境：仅显示本浏览器内的顾客预约。正式版需接云端数据库后各端同步。
+          与顾客端同浏览器时会自动同步；新开预约、修改或取消后列表会自动刷新。
         </Text>
 
         <Text style={styles.sectionLabel}>选择日期</Text>
