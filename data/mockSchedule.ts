@@ -57,9 +57,32 @@ export function formatBookingDate(dateKey: string): string {
   return `${y}年${Number(m)}月${Number(d)}日`;
 }
 
-function toDateKey(d: Date): string {
+/** 本地日历 YYYY-MM-DD */
+export function toDateKey(d: Date): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
+}
+
+export function getTodayDateKey(now = new Date()): string {
+  return toDateKey(now);
+}
+
+/** 某时段开始时间是否已过去（仅当 dateKey 为「今天」时有意义） */
+export function isSlotInPast(dateKey: string, timeLabel: string, now = new Date()): boolean {
+  if (dateKey !== getTodayDateKey(now)) return false;
+  const [y, m, d] = dateKey.split('-').map(Number);
+  const [hh, mm] = timeLabel.split(':').map(Number);
+  const slotStart = new Date(y, m - 1, d, hh, mm, 0, 0);
+  return slotStart.getTime() <= now.getTime();
+}
+
+export function getPastTimeLabelsForDay(dateKey: string, now = new Date()): Set<string> {
+  const set = new Set<string>();
+  if (dateKey !== getTodayDateKey(now)) return set;
+  for (const label of ALL_TIME_LABELS) {
+    if (isSlotInPast(dateKey, label, now)) set.add(label);
+  }
+  return set;
 }

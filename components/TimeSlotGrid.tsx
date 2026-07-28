@@ -9,11 +9,13 @@ type Props = {
   slots: TimeSlot[];
   selectedTime: string | null;
   onSelect: (time: string) => void;
-  /** 商家 Block 的时段，顾客不可选 */
+  /** 商家 Block 的时段 */
   disabledLabels?: ReadonlySet<string>;
+  /** 今天已过去的时段 */
+  pastLabels?: ReadonlySet<string>;
 };
 
-export function TimeSlotGrid({ slots, selectedTime, onSelect, disabledLabels }: Props) {
+export function TimeSlotGrid({ slots, selectedTime, onSelect, disabledLabels, pastLabels }: Props) {
   return (
     <View style={styles.panel}>
       <ScrollView
@@ -25,7 +27,10 @@ export function TimeSlotGrid({ slots, selectedTime, onSelect, disabledLabels }: 
       >
         {slots.map((slot) => {
           const selected = slot.label === selectedTime;
-          const disabled = disabledLabels?.has(slot.label) ?? false;
+          const isPast = pastLabels?.has(slot.label) ?? false;
+          const isBlocked = disabledLabels?.has(slot.label) ?? false;
+          const disabled = isPast || isBlocked;
+          const a11yExtra = isBlocked ? '不可约' : isPast ? '不可选' : '';
           return (
             <Pressable
               key={slot.id}
@@ -39,7 +44,7 @@ export function TimeSlotGrid({ slots, selectedTime, onSelect, disabledLabels }: 
               ]}
               accessibilityRole="radio"
               accessibilityState={{ selected, disabled }}
-              accessibilityLabel={disabled ? `${slot.label} 已满或不可约` : slot.label}
+              accessibilityLabel={a11yExtra ? `${slot.label} ${a11yExtra}` : slot.label}
             >
               <Text
                 style={[
@@ -48,7 +53,7 @@ export function TimeSlotGrid({ slots, selectedTime, onSelect, disabledLabels }: 
                   disabled && styles.slotTextDisabled,
                 ]}
               >
-                {disabled ? '不可约' : slot.label}
+                {slot.label}
               </Text>
             </Pressable>
           );
@@ -99,5 +104,5 @@ const styles = StyleSheet.create({
   },
   slotText: { fontSize: 15, fontWeight: '600', color: palette.inkGreenMuted, letterSpacing: 0.5 },
   slotTextSelected: { color: '#fff', fontWeight: '700' },
-  slotTextDisabled: { fontSize: 13, color: palette.textSoft, fontWeight: '600' },
+  slotTextDisabled: { color: palette.textSoft, fontWeight: '600' },
 });

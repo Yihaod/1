@@ -9,25 +9,37 @@ import { SelectedStoreBar } from '@/components/SelectedStoreBar';
 import { TimeSlotGrid } from '@/components/TimeSlotGrid';
 import { bookingRules, elevation, palette, radius, spacing } from '@/constants/theme';
 import { useBookingDraft } from '@/context/BookingDraftContext';
-import { getDayOptions, getTimeSlotsForDay } from '@/data/mockSchedule';
+import { getDayOptions, getPastTimeLabelsForDay, getTimeSlotsForDay, toDateKey } from '@/data/mockSchedule';
 import { getStoreById } from '@/data/stores';
 import { adminSettingsRepository } from '@/lib/adminSettingsRepository';
+import { useNow } from '@/hooks/useNow';
 import { useFocusEffect } from '@react-navigation/native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRootNavigationState, useRouter } from 'expo-router';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function BookScheduleScreen() {
   const router = useRouter();
+  const rootNavigationState = useRootNavigationState();
+  const navigationReady = Boolean(rootNavigationState?.key);
   const insets = useSafeAreaInsets();
   const { draft, setDraft } = useBookingDraft();
   const params = useLocalSearchParams<{ storeId?: string | string[] }>();
   const rawStoreId = params.storeId;
   const paramStoreId = Array.isArray(rawStoreId) ? rawStoreId[0] : rawStoreId;
 
-  const days = useMemo(() => getDayOptions(), []);
+  const now = useNow(60_000);
+  const todayKey = toDateKey(now);
+  const days = useMemo(() => getDayOptions(), [todayKey]);
   const [blockedTimes, setBlockedTimes] = useState<Set<string>>(() => new Set());
+
+  const activeDateKey = draft.date ?? days[0]?.key ?? '';
+
+  const pastTimes = useMemo(
+    () => getPastTimeLabelsForDay(activeDateKey, now),
+    [activeDateKey, now]
+  );
 
   const reloadBlocks = useCallback(() => {
     const sid = draft.storeId || paramStoreId;
@@ -50,10 +62,11 @@ export default function BookScheduleScreen() {
   }, [reloadBlocks]);
 
   useEffect(() => {
-    if (draft.time && blockedTimes.has(draft.time)) {
+    if (!draft.time) return;
+    if (blockedTimes.has(draft.time) || pastTimes.has(draft.time)) {
       setDraft((prev) => ({ ...prev, time: null }));
     }
-  }, [blockedTimes, draft.time, setDraft]);
+  }, [blockedTimes, pastTimes, draft.time, setDraft]);
 
   useLayoutEffect(() => {
     if (!paramStoreId) return;
@@ -72,15 +85,12 @@ export default function BookScheduleScreen() {
     });
   }, [paramStoreId, setDraft]);
 
-  useFocusEffect(
-    useCallback(() => {
-      const hasStore = Boolean(draft.storeId || paramStoreId);
-      if (!hasStore) {
-        router.replace('/stores');
-        return;
-      }
-    }, [draft.storeId, paramStoreId, router])
-  );
+  const hasStore = Boolean(draft.storeId || paramStoreId);
+
+  useEffect(() => {
+    if (!navigationReady || hasStore) return;
+    router.replace('/stores');
+  }, [navigationReady, hasStore, router]);
 
   useEffect(() => {
     if (!draft.date && days[0]) {
@@ -104,6 +114,14 @@ export default function BookScheduleScreen() {
     : paramStoreId
       ? getStoreById(paramStoreId)
       : undefined;
+
+  if (!navigationReady || !hasStore) {
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator color={palette.inkGreen} />
+      </View>
+    );
+  }
 
   if (!activeStore) {
     return (
@@ -133,11 +151,16 @@ export default function BookScheduleScreen() {
         <DatePickerRow days={days} selectedKey={draft.date} onSelect={onSelectDate} />
 
         <SectionHeader icon="time-outline" title={bookingRules.timeLabel} />
-        <Text style={styles.timeHint}>时段较多，可在此区域上下滑动</Text>
+        <Text style={styles.timeHint}>
+          {activeDateKey === todayKey
+            ? '今天已过的时段不可选，并随当前时间自动更新'
+            : '时段较多，可在此区域上下滑动'}
+        </Text>
         <TimeSlotGrid
           slots={slots}
           selectedTime={draft.time}
           disabledLabels={blockedTimes}
+          pastLabels={pastTimes}
           onSelect={(time) => setDraft((prev) => ({ ...prev, time }))}
         />
 
