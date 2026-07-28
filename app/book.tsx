@@ -31,14 +31,19 @@ export default function BookScheduleScreen() {
 
   const now = useNow(60_000);
   const todayKey = toDateKey(now);
-  const days = useMemo(() => getDayOptions(), [todayKey]);
+  const days = useMemo(() => getDayOptions(14, now), [todayKey, now.getTime()]);
   const [blockedTimes, setBlockedTimes] = useState<Set<string>>(() => new Set());
 
   const activeDateKey = draft.date ?? days[0]?.key ?? '';
 
   const pastTimes = useMemo(
     () => getPastTimeLabelsForDay(activeDateKey, now),
-    [activeDateKey, now]
+    [activeDateKey, now.getTime()]
+  );
+
+  const isTimeSelectable = useCallback(
+    (time: string) => !blockedTimes.has(time) && !pastTimes.has(time),
+    [blockedTimes, pastTimes]
   );
 
   const reloadBlocks = useCallback(() => {
@@ -93,17 +98,36 @@ export default function BookScheduleScreen() {
   }, [navigationReady, hasStore, router]);
 
   useEffect(() => {
-    if (!draft.date && days[0]) {
-      setDraft((prev) => ({ ...prev, date: days[0].key }));
-    }
-  }, [days, draft.date, setDraft]);
+    if (!days[0]) return;
+    setDraft((prev) => {
+      const dateStillValid = prev.date != null && days.some((d) => d.key === prev.date);
+      const dateBeforeToday = prev.date != null && prev.date < todayKey;
+      if (!prev.date || !dateStillValid || dateBeforeToday) {
+        return {
+          ...prev,
+          date: days[0].key,
+          time: null,
+          serviceId: null,
+          serviceName: '',
+        };
+      }
+      return prev;
+    });
+  }, [days, todayKey, setDraft]);
 
   const slots = useMemo(
     () => (draft.date ? getTimeSlotsForDay(draft.date) : getTimeSlotsForDay(days[0]?.key ?? '')),
     [draft.date, days]
   );
 
-  const canContinue = Boolean(draft.storeId && draft.date && draft.time);
+  const canContinue = Boolean(
+    draft.storeId && draft.date && draft.time && isTimeSelectable(draft.time)
+  );
+
+  const onSelectTime = (time: string) => {
+    if (!isTimeSelectable(time)) return;
+    setDraft((prev) => ({ ...prev, time }));
+  };
 
   const onSelectDate = (key: string) => {
     setDraft((prev) => ({ ...prev, date: key, time: null, serviceId: null, serviceName: '' }));
@@ -161,7 +185,7 @@ export default function BookScheduleScreen() {
           selectedTime={draft.time}
           disabledLabels={blockedTimes}
           pastLabels={pastTimes}
-          onSelect={(time) => setDraft((prev) => ({ ...prev, time }))}
+          onSelect={onSelectTime}
         />
 
         <View style={styles.cardFooter}>

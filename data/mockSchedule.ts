@@ -30,8 +30,8 @@ export function getAllTimeLabels(): string[] {
   return [...ALL_TIME_LABELS];
 }
 
-export function getDayOptions(count = 14): DayOption[] {
-  const today = new Date();
+export function getDayOptions(count = 14, anchor: Date = new Date()): DayOption[] {
+  const today = new Date(anchor);
   const list: DayOption[] = [];
   for (let i = 0; i < count; i++) {
     const d = new Date(today);

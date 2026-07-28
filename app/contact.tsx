@@ -12,6 +12,7 @@ import { setPendingSuccessBookingId, peekPendingSuccessBookingId } from '@/lib/l
 import { sendBookingConfirmationSms } from '@/lib/sms';
 import { stripCustomerHonorific } from '@/lib/gender';
 import { isNonEmptyName, isValidCnMobile } from '@/lib/validation';
+import { isSlotInPast } from '@/data/mockSchedule';
 import { useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import {
@@ -72,6 +73,10 @@ export default function ContactScreen() {
 
   const submit = async () => {
     if (!validate()) return;
+    if (draft.date && draft.time && isSlotInPast(draft.date, draft.time)) {
+      Alert.alert('时间无效', '所选时段已过期，请返回重新选择。');
+      return;
+    }
     setLoading(true);
     try {
       const payload = {

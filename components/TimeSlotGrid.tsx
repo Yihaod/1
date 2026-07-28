@@ -35,7 +35,10 @@ export function TimeSlotGrid({ slots, selectedTime, onSelect, disabledLabels, pa
             <Pressable
               key={slot.id}
               disabled={disabled}
-              onPress={() => onSelect(slot.label)}
+              onPress={() => {
+                if (disabled) return;
+                onSelect(slot.label);
+              }}
               style={({ pressed }) => [
                 styles.slot,
                 selected && styles.slotSelected,
