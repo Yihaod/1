@@ -4,6 +4,7 @@ import { DatePickerRow } from '@/components/DatePickerRow';
 import { useAdminStore } from '@/context/AdminStoreContext';
 import { getDayOptions, getAllTimeLabels } from '@/data/mockSchedule';
 import { adminSettingsRepository } from '@/lib/adminSettingsRepository';
+import { merchantRoutes } from '@/constants/routes';
 import { elevation, palette, radius, spacing } from '@/constants/theme';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useMemo, useState } from 'react';
@@ -38,7 +39,7 @@ export default function AdminScheduleScreen() {
 
   return (
     <View style={styles.safe}>
-      <AdminTopBar title="预约排期" subtitle="Block / Unblock 时段" />
+      <AdminTopBar title="预约排期" subtitle="Block / Unblock 时段" backHref={merchantRoutes.home} />
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + spacing.xl }]}
         showsVerticalScrollIndicator={false}

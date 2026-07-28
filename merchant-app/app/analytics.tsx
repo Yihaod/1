@@ -2,6 +2,7 @@ import { AdminTopBar } from '@/components/admin/AdminTopBar';
 import { clinicStores } from '@/data/stores';
 import { isBookingActive, isBookingCancelled } from '@/lib/bookingStatus';
 import { bookingRepository } from '@/lib/bookingRepository';
+import { merchantRoutes } from '@/constants/routes';
 import { elevation, palette, radius, spacing } from '@/constants/theme';
 import type { BookingRecord } from '@/types/booking';
 import { useFocusEffect } from '@react-navigation/native';
@@ -46,7 +47,7 @@ export default function AdminAnalyticsScreen() {
 
   return (
     <View style={styles.safe}>
-      <AdminTopBar title="数据概览" subtitle="基础预约与经营摘要" />
+      <AdminTopBar title="数据概览" subtitle="基础预约与经营摘要" backHref={merchantRoutes.home} />
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + spacing.xl }]}
         showsVerticalScrollIndicator={false}

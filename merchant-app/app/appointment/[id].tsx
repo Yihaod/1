@@ -1,5 +1,6 @@
 import { AdminTopBar } from '@/components/admin/AdminTopBar';
 import { BookingSummaryCard } from '@/components/BookingSummaryCard';
+import { merchantRoutes } from '@/constants/routes';
 import { elevation, palette, radius, spacing } from '@/constants/theme';
 import { formatBookingDate } from '@/data/mockSchedule';
 import { subscribeBookingsChanged } from '@/lib/bookingChangeBus';
@@ -53,7 +54,7 @@ export default function AppointmentDetailScreen() {
   if (loading) {
     return (
       <View style={styles.safe}>
-        <AdminTopBar title="预约详情" />
+        <AdminTopBar title="预约详情" backHref={merchantRoutes.appointments} />
         <ActivityIndicator color={palette.inkGreen} style={styles.loader} />
       </View>
     );
@@ -62,7 +63,7 @@ export default function AppointmentDetailScreen() {
   if (!booking) {
     return (
       <View style={styles.safe}>
-        <AdminTopBar title="预约详情" />
+        <AdminTopBar title="预约详情" backHref={merchantRoutes.appointments} />
         <Text style={styles.empty}>未找到该预约，可能已被删除或不在本机记录中</Text>
       </View>
     );
@@ -72,7 +73,11 @@ export default function AppointmentDetailScreen() {
 
   return (
     <View style={styles.safe}>
-      <AdminTopBar title="预约详情" subtitle={formatBookingDate(booking.date)} />
+      <AdminTopBar
+        title="预约详情"
+        subtitle={formatBookingDate(booking.date)}
+        backHref={merchantRoutes.appointments}
+      />
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + spacing.xl }]}
         showsVerticalScrollIndicator={false}

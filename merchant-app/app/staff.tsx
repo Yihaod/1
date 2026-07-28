@@ -5,6 +5,7 @@ import { useAdminStore } from '@/context/AdminStoreContext';
 import { getStaffByStore } from '@/data/staff';
 import { getDayOptions } from '@/data/mockSchedule';
 import { adminSettingsRepository } from '@/lib/adminSettingsRepository';
+import { merchantRoutes } from '@/constants/routes';
 import { elevation, palette, radius, spacing } from '@/constants/theme';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useMemo, useState } from 'react';
@@ -41,7 +42,7 @@ export default function AdminStaffScreen() {
 
   return (
     <View style={styles.safe}>
-      <AdminTopBar title="服务人员" subtitle="设置是否上班（按日）" />
+      <AdminTopBar title="服务人员" subtitle="设置是否上班（按日）" backHref={merchantRoutes.home} />
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + spacing.xl }]}
         showsVerticalScrollIndicator={false}
