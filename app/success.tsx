@@ -185,16 +185,12 @@ export default function SuccessScreen() {
           {!cancelled ? (
             <>
               <PrimaryButton label="修改预约" variant="secondary" onPress={modify} />
-              <Pressable
+              <PrimaryButton
+                label={cancelling ? '正在取消…' : '取消预约'}
+                variant="danger"
                 onPress={() => setCancelDialogOpen(true)}
                 disabled={cancelling}
-                style={styles.cancelLink}
-                accessibilityRole="button"
-              >
-                <Text style={styles.cancelLinkText}>
-                  {cancelling ? '正在取消…' : '取消预约'}
-                </Text>
-              </Pressable>
+              />
             </>
           ) : null}
           <PrimaryButton
@@ -299,7 +295,5 @@ const styles = StyleSheet.create({
   smsPreviewLabel: { fontSize: 11, color: palette.textSoft, letterSpacing: 1, marginBottom: 6 },
   smsPreviewText: { fontSize: 13, lineHeight: 21, color: palette.textMuted },
   actions: { gap: spacing.sm, marginTop: spacing.xs },
-  cancelLink: { alignItems: 'center', paddingVertical: spacing.md },
-  cancelLinkText: { fontSize: 16, fontWeight: '700', color: palette.cinnabar },
   error: { textAlign: 'center', marginTop: 80, color: palette.textMuted },
 });

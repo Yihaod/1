@@ -26,8 +26,14 @@ export function ConfirmDialog({
 }: Props) {
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
-      <Pressable style={styles.backdrop} onPress={onCancel} accessibilityRole="button">
-        <View style={styles.card}>
+      <View style={styles.root}>
+        <Pressable
+          style={styles.backdropHit}
+          onPress={onCancel}
+          accessibilityRole="button"
+          accessibilityLabel="关闭"
+        />
+        <View style={styles.card} accessibilityViewIsModal>
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.message}>{message}</Text>
           <View style={styles.actions}>
@@ -49,17 +55,20 @@ export function ConfirmDialog({
             </Pressable>
           </View>
         </View>
-      </Pressable>
+      </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
+  root: {
     flex: 1,
-    backgroundColor: 'rgba(37, 42, 40, 0.45)',
     justifyContent: 'center',
     padding: spacing.lg,
+  },
+  backdropHit: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(37, 42, 40, 0.45)',
   },
   card: {
     backgroundColor: palette.card,
@@ -70,6 +79,9 @@ const styles = StyleSheet.create({
     maxWidth: 400,
     width: '100%',
     alignSelf: 'center',
+    zIndex: 2,
+    // Web：卡片在遮罩之上，避免点击冒泡到遮罩导致只关闭不执行确认
+    position: 'relative',
   },
   title: { fontSize: 20, fontWeight: '700', color: palette.inkGreen, textAlign: 'center' },
   message: {

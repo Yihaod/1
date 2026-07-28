@@ -6,7 +6,7 @@ type Props = {
   onPress: () => void;
   disabled?: boolean;
   loading?: boolean;
-  variant?: 'primary' | 'secondary';
+  variant?: 'primary' | 'secondary' | 'danger';
   style?: ViewStyle;
 };
 
@@ -19,6 +19,7 @@ export function PrimaryButton({
   style,
 }: Props) {
   const isPrimary = variant === 'primary';
+  const isDanger = variant === 'danger';
   const inactive = disabled || loading;
 
   return (
@@ -27,7 +28,7 @@ export function PrimaryButton({
       disabled={inactive}
       style={({ pressed }) => [
         styles.base,
-        isPrimary ? styles.primary : styles.secondary,
+        isPrimary ? styles.primary : isDanger ? styles.danger : styles.secondary,
         inactive && isPrimary && styles.primaryDisabled,
         pressed && !inactive && styles.pressed,
         style,
@@ -39,7 +40,12 @@ export function PrimaryButton({
       {loading ? (
         <ActivityIndicator color={isPrimary ? '#fff' : palette.inkGreen} />
       ) : (
-        <Text style={[styles.text, isPrimary ? styles.textPrimary : styles.textSecondary]}>
+        <Text
+          style={[
+            styles.text,
+            isPrimary ? styles.textPrimary : isDanger ? styles.textDanger : styles.textSecondary,
+          ]}
+        >
           {label}
         </Text>
       )}
@@ -62,8 +68,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: palette.jade,
   },
+  danger: {
+    backgroundColor: '#FFF5F3',
+    borderWidth: 1,
+    borderColor: '#E8C4BC',
+  },
   pressed: { opacity: 0.94, transform: [{ scale: 0.995 }] },
   text: { fontSize: 17, fontWeight: '700', letterSpacing: 1 },
   textPrimary: { color: '#fff' },
   textSecondary: { color: palette.inkGreen },
+  textDanger: { color: palette.cinnabar },
 });
