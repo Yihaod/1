@@ -18,6 +18,7 @@ export default function RootLayout() {
         <Stack.Screen name="schedule" />
         <Stack.Screen name="staff" />
         <Stack.Screen name="appointments" />
+        <Stack.Screen name="appointment/[id]" />
         <Stack.Screen name="analytics" />
       </Stack>
     </AdminStoreProvider>

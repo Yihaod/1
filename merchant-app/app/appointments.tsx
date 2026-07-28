@@ -8,13 +8,16 @@ import { useAdminStore } from '@/context/AdminStoreContext';
 import { formatBookingDate, getDayOptions } from '@/data/mockSchedule';
 import { elevation, palette, radius, spacing } from '@/constants/theme';
 import type { BookingRecord } from '@/types/booking';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBookingsRevision } from '@/hooks/useBookingsRevision';
 
 export default function AdminAppointmentsScreen() {
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const { storeId } = useAdminStore();
   const days = useMemo(() => getDayOptions(14), []);
@@ -61,19 +64,28 @@ export default function AdminAppointmentsScreen() {
         {items.map((b) => {
           const active = isBookingActive(b);
           return (
-            <View key={b.id} style={[styles.card, elevation.card]}>
+            <Pressable
+              key={b.id}
+              onPress={() => router.push(`/appointment/${encodeURIComponent(b.id)}`)}
+              style={({ pressed }) => [styles.card, elevation.card, pressed && styles.cardPressed]}
+              accessibilityRole="button"
+              accessibilityLabel={`查看 ${b.time} 预约详情`}
+            >
               <View style={styles.cardHeader}>
                 <Text style={styles.time}>{b.time}</Text>
-                <Text style={[styles.badge, !active && styles.badgeCancelled]}>
-                  {active ? '已确认' : '已取消'}
-                </Text>
+                <View style={styles.cardHeaderRight}>
+                  <Text style={[styles.badge, !active && styles.badgeCancelled]}>
+                    {active ? '已确认' : '已取消'}
+                  </Text>
+                  <Ionicons name="chevron-forward" size={18} color={palette.textSoft} />
+                </View>
               </View>
               <Text style={styles.line}>
                 {formatCustomerDisplayName(b.customerName, b.gender)} · {b.partySize} 人
               </Text>
               <Text style={styles.line}>{b.serviceName}</Text>
-              <Text style={styles.meta}>编号 {b.id}</Text>
-            </View>
+              <Text style={styles.meta}>编号 {b.id} · 点击查看详情</Text>
+            </Pressable>
           );
         })}
 
@@ -107,6 +119,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  cardHeaderRight: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  cardPressed: { opacity: 0.92 },
   time: { fontSize: 20, fontWeight: '800', color: palette.inkGreen },
   badge: {
     fontSize: 11,
